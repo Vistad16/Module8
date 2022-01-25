@@ -1,13 +1,5 @@
 package JavaCore.module8.task4;
 
-/*todo:
-*  push(Object value) добавляет элемент в конец
-*   remove(int index) удаляет элемент под индексом
-*   clear() очищает коллекцию
-*   size() возвращает размер коллекции
-*   peek() возвращает первый элемент в стеке (LIFO)
-*   pop() возвращает первый элемент в стеке и удаляет его из коллекции*/
-
 import java.util.NoSuchElementException;
 import java.util.Objects;
 

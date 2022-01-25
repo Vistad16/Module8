@@ -93,7 +93,8 @@ public class MyQueue<T> {
             throw new NoSuchElementException();
         }
         T result = get(0);
-        first = first.next;
+        remove(0);
+        //first = first.next;
         return result;
     }
 

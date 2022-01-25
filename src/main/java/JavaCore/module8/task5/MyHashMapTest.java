@@ -7,9 +7,10 @@ public class MyHashMapTest {
         myHashMap.put(45, "bbbb");
         myHashMap.put(13, "cccc");
         myHashMap.put(88, "dddd");
+        myHashMap.put(88, "dddd");
 
         myHashMap.remove(11);
-        System.out.println(myHashMap.get(13));
+        System.out.println(myHashMap.get(45));
         //myHashMap.clear();
         System.out.println(myHashMap.size());
 
