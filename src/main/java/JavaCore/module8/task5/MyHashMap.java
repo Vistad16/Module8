@@ -1,142 +1,169 @@
 package JavaCore.module8.task5;
 
-    public class MyHashMap <T, K> {
-        Node<T, K> last;
-        Node<T, K> first;
+import java.util.NoSuchElementException;
 
-        private int size = 0;
+public class MyHashMap<K, V> {
+    private static final int CAPACITY = 16;
+    private static final int BUCKET_SIZE = 8;
+    private static final double LOAD_BUCKETS = 75d;
+    private Node<K, V>[] startArr = new Node[CAPACITY];
 
-        private static class Node<T, K> {
-            int hash;
-            private final T key;
-            private final K value;
-            Node<T, K> next;
+    static class Node<K, V> {
+        final int hash;
+        final K key;
+        V element;
+        Node<K, V> next;
 
-            Node(T key, K value, Node<T, K> next, int hash) {
-                this.key = key;
-                this.value = value;
-                this.next = next;
-                this.hash = hash;
-            }
-
-            public T getKey() {
-                return key;
-            }
-
-            public K getValue() {
-                return value;
-            }
-
-            @Override
-            public String toString() {
-                return key + "=" + value;
-            }
-
-            @Override
-            public final boolean equals(Object o) {
-                if (o == null) {
-                    return false;
-                }
-
-                if (!(o instanceof Node)) {
-                    return false;
-                }
-                Node<T, K> another = (Node<T, K>) o;
-                int hashOfO = o.hashCode();
-                int hashAnother = another.hashCode();
-                return hashOfO == hashAnother;
-            }
+        public Node(int hash, K key, V element, Node<K, V> next) {
+            this.hash = hash;
+            this.key = key;
+            this.element = element;
+            this.next = next;
         }
 
-        @Override
-        public String toString() {
-            String s = "";
-            for (Node<T, K> x = first; x != null; x = x.next) {
-                s += x + " ";
-            }
-            return s;
+        public K getKey() {
+            return key;
         }
 
-        public int getSize() {
-            return size;
+        public V getElement() {
+            return element;
         }
 
-        public void setSize(int size) {
-            this.size = size;
+        public void setElement(V newElement) {
+            element = newElement;
         }
 
-        public void put(T key, K value) {
-            if (!isKeyInHashMap(key)) {
-                Node<T, K> l = last;
-                Node<T, K> f = first;
-                final Node<T, K> newNode = new Node<T, K>(key, value, null, hashCode());
-                if (l == null)
-                    first = newNode;
-                else
-                    l.next = newNode;
-                last = newNode;
-                size++;
 
-            }
-        }
-        public boolean isKeyInHashMap(T key){
+    }
+
+
+    //put
+    public void put(K key, V value) {
+        int defaultHash = 0;
+        int hash = (key == null) ? 0 : (defaultHash = key.hashCode()) ^ (defaultHash >>> 16);
+        int arrSize = startArr.length;
+        int bucket = hash % arrSize;
+
+        if (startArr[bucket] == null) {
+            startArr[bucket] = new Node<K, V>(hash, key, value, null);
+        } else {
+            Node<K, V> temporaryNode = startArr[bucket];
             int count = 0;
-            for (Node<T, K> y = first; y != null; y = y.next){
-                if (key.equals(y.key)){
-                    count++;
+            while (temporaryNode.next != null) {
+                if (temporaryNode.key == key) {
+                    break;
                 }
-
+                temporaryNode = temporaryNode.next;
+                count++;
             }
-            return count==1;
-        }
+            if (temporaryNode.key == key) {
+                temporaryNode.setElement(value);
 
-
-        public void remove(T key) {
-            size--;
-            Node<T, K> nodeToRemove;
-            int index = -1;
-            for (Node<T, K> y = first; y != null; y = y.next) {
-                index++;
-
-                if (key.equals(y.key)) {
-                    nodeToRemove = y;
-                    Node<T, K> pointerForNextNode;
-                    pointerForNextNode = nodeToRemove.next;
-
-                    if (index >= 0 && index < size) {
-                        Node<T, K> z = first;
-
-                        if (index == 0){
-                            first = z.next;
-                        } else {
-                            for (int i = 0; i < index - 1; i++) {
-                                z = z.next;
-                            }
-                            z.next = pointerForNextNode;
-                        }
-                    }
-                }
+            } else {
+                temporaryNode.next = new Node<K, V>(hash, key, value, null);
+            }
+            if (count == BUCKET_SIZE || 100d / (startArr.length * BUCKET_SIZE) * size() >= LOAD_BUCKETS) {
+                sizeCollection(startArr.length * 2);
             }
         }
 
-        public void clear(){
-            first = null;
-            setSize(0);
-        }
+    }
 
-        public int size(){
-            return getSize();
-        }
+    private void sizeCollection(int size) {
+        Node<K, V>[] oldCollection = startArr;
+        startArr = new Node[size];
 
-        public K get(T key) {
-            int hashOfGivenKey = key.hashCode();
-
-            Node<T, K> x;
-            for ( x = first; x != null; x = x.next ) {
-                if (key.equals(x.key)) {
-                    return x.value;
-                }
+        for (Node<K, V> kvNode : oldCollection) {
+            if (kvNode == null) {
+                continue;
             }
-            return null;
+            Node<K, V> temporaryNode = kvNode;
+            put(temporaryNode.getKey(), temporaryNode.getElement());
+
+            while (temporaryNode.next != null){
+                temporaryNode = temporaryNode.next;
+                put(temporaryNode.getKey(), temporaryNode.getElement());
+            }
         }
     }
+
+
+    //remove
+    public void remove(K key) {
+        int defaultHash = 0;
+        int hash = (key == null) ? 0 : (defaultHash = key.hashCode()) ^ (defaultHash >>> 16);
+        int arrSize = startArr.length;
+        int bucket = hash % arrSize;
+        if (startArr[bucket] == null) {
+            throw new NoSuchElementException();
+        }
+        Node<K, V> removable = startArr[bucket];
+        Node<K, V> previousNode = null;
+        if (removable.getKey() == key) {
+            startArr[bucket] = removable.next;
+            if (100d / (startArr.length * BUCKET_SIZE) * size() < LOAD_BUCKETS) {
+                sizeCollection(startArr.length / 2);
+            }
+            return;
+        }
+        while (removable.next != null) {
+            previousNode = removable;
+            removable = removable.next;
+            if (removable.getKey() == key) {
+                previousNode.next = removable.next;
+                if (100d / (startArr.length * BUCKET_SIZE) * size() < LOAD_BUCKETS) {
+                    sizeCollection(startArr.length / 2);
+                }
+                return;
+            }
+        }
+    }
+
+
+    //clear
+    public void clear() {
+        startArr = new Node[0];
+    }
+
+
+    //size
+    public int size() {
+        int size = 0;
+        for (Node<K, V> node : startArr) {
+            if (node == null) {
+                continue;
+            }
+            Node<K, V> temporaryNode = node;
+            size++;
+            while (temporaryNode.next != null) {
+                temporaryNode = temporaryNode.next;
+                size++;
+            }
+        }
+        return size;
+    }
+
+
+    //get
+    public V get(K key) {
+        int defaultHash = 0;
+        int hash = (key == null) ? 0 : (defaultHash = key.hashCode()) ^ (defaultHash >>> 16);
+        int arrSize = startArr.length;
+        int buckets = hash % arrSize;
+        if (startArr[buckets] == null) {
+            throw new NoSuchElementException();
+        }
+        Node<K, V> result = startArr[buckets];
+        if (result.getKey() == key) {
+            return result.getElement();
+        }
+        while (result.next != null) {
+            result = result.next;
+            if (result.getKey() == key) {
+                return result.getElement();
+            }
+        }
+        throw new NoSuchElementException();
+    }
+
+}
